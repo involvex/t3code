@@ -1010,7 +1010,7 @@ jobs:
         run: node scripts/update-release-package-versions.ts "${{ needs.preflight.outputs.version }}"
 
       - name: Refresh release lockfile
-        run: bun install --no-save
+        run: bun install --lockfile-only
 
       - id: deploy
         name: Build staged deployment
@@ -1295,7 +1295,7 @@ jobs:
 
       - name: Refresh lockfile
         if: steps.update_versions.outputs.changed == 'true'
-        run: bun install --no-save
+        run: bun install --lockfile-only
 
       - name: Commit and push version bump
         if: steps.update_versions.outputs.changed == 'true'

@@ -208,7 +208,11 @@ try {
     },
   );
 
-  NodeChildProcess.execFileSync("bun", ["install", "--no-save"], {
+  // Delete the copied lockfile so the assertion below proves `bun install`
+  // regenerates it (rather than re-reading the fixture copy).
+  NodeFS.rmSync(NodePath.resolve(tempRoot, "bun.lock"), { force: true });
+
+  NodeChildProcess.execFileSync("bun", ["install", "--lockfile-only"], {
     cwd: tempRoot,
     stdio: "inherit",
   });

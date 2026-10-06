@@ -11,7 +11,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const root = path.resolve(__dirname, "..");
+const root = process.env.CONTENT_PATCHES_ROOT ?? path.resolve(__dirname, "..");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const patches = packageJson.patches || {};
 const bunDir = path.join(root, "node_modules/.bun");
@@ -84,6 +84,14 @@ for (const [pkgName, patchPath] of Object.entries(patches)) {
 
     for (const block of blocks) {
       const file = path.join(pkgPath, block.to);
+      // Patch content is trusted only as far as the target package: refuse
+      // hunks that escape it (e.g. a `b/../../` path), since postinstall
+      // runs on every contributor and CI machine.
+      const relativeTarget = path.relative(pkgPath, file);
+      if (relativeTarget.startsWith("..") || path.isAbsolute(relativeTarget)) {
+        failed.push(`${pkgName} (${entry}): refusing to write outside package dir: ${block.to}`);
+        continue;
+      }
       if (block.deleted) {
         if (fs.existsSync(file)) {
           fs.rmSync(file);

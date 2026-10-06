@@ -677,7 +677,7 @@ export function encodeAndroidPairingUrls(pairingUrls: ReadonlyArray<string>): st
 function startMetro(config: ShowcaseConfig): NodeChildProcess.ChildProcess {
   return spawnProcess(
     "bunx",
-    ["exec", "expo", "start", "--dev-client", "--port", String(config.metroPort)],
+    ["expo", "start", "--dev-client", "--port", String(config.metroPort)],
     {
       cwd: MOBILE_ROOT,
       env: {
@@ -699,7 +699,7 @@ async function warmMetroBundle(
 
 async function buildIos(): Promise<string> {
   const derivedData = NodePath.join(MOBILE_ROOT, ".showcase/ios-derived-data");
-  await runCommand("bunx", ["exec", "expo", "prebuild", "--clean", "--platform", "ios"], {
+  await runCommand("bunx", ["expo", "prebuild", "--clean", "--platform", "ios"], {
     cwd: MOBILE_ROOT,
     env: MOBILE_BUILD_ENV,
   });
@@ -727,7 +727,7 @@ async function buildIos(): Promise<string> {
 }
 
 async function buildAndroid(abis: ReadonlyArray<string>): Promise<string> {
-  await runCommand("bunx", ["exec", "expo", "prebuild", "--clean", "--platform", "android"], {
+  await runCommand("bunx", ["expo", "prebuild", "--clean", "--platform", "android"], {
     cwd: MOBILE_ROOT,
     env: MOBILE_BUILD_ENV,
   });

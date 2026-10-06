@@ -62,14 +62,18 @@ const BuildArch = Schema.Literals(["arm64", "x64", "universal"]);
 const WorkspaceConfig = Schema.Struct({
   overrides: Schema.optional(Schema.Record(Schema.String, Schema.String)),
   patches: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+  trustedDependencies: Schema.optional(Schema.Array(Schema.String)),
 });
 type WorkspaceConfig = typeof WorkspaceConfig.Type;
 
 const StageWorkspaceConfig = Schema.Struct({
-  // Bun uses flat node_modules (no nodeLinker) and runs all build scripts
-  // (no allowBuilds). Only overrides and patches need staging.
+  // Bun runs no lifecycle scripts unless trustedDependencies names them, so
+  // trust must be staged alongside overrides and patches. Omitting it here
+  // ships release trees with unbuilt native modules (electron without its
+  // binary download, node-pty without its node-gyp fallback build).
   patches: Schema.optional(Schema.Record(Schema.String, Schema.String)),
   overrides: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+  trustedDependencies: Schema.optional(Schema.Array(Schema.String)),
 });
 type StageWorkspaceConfig = typeof StageWorkspaceConfig.Type;
 
@@ -1497,12 +1501,16 @@ const stageClerkPasskeyNativeBinaries = Effect.fn("stageClerkPasskeyNativeBinari
 export function createStageWorkspaceConfig(input: {
   readonly patches?: Record<string, string>;
   readonly overrides?: Record<string, string>;
+  readonly trustedDependencies?: ReadonlyArray<string> | undefined;
 }): StageWorkspaceConfig {
-  const { patches, overrides } = input;
+  const { patches, overrides, trustedDependencies } = input;
 
   return {
     ...(patches && Object.keys(patches).length > 0 ? { patches } : {}),
     ...(overrides && Object.keys(overrides).length > 0 ? { overrides } : {}),
+    ...(trustedDependencies && trustedDependencies.length > 0
+      ? { trustedDependencies: [...trustedDependencies] }
+      : {}),
   };
 }
 
@@ -2913,6 +2921,7 @@ export const stageWindowsServerSidecar = Effect.fn("stageWindowsServerSidecar")(
   readonly fffNodeVersion: string;
   readonly patchedDependencies: Record<string, string>;
   readonly overrides: Record<string, string>;
+  readonly trustedDependencies: ReadonlyArray<string>;
   readonly asarPath: string;
   readonly verbose: boolean;
 }) {
@@ -2934,8 +2943,9 @@ export const stageWindowsServerSidecar = Effect.fn("stageWindowsServerSidecar")(
   const sidecarWorkspaceConfig = createStageWorkspaceConfig({
     patches: sidecarPatchedDependencies,
     overrides: input.overrides,
+    trustedDependencies: input.trustedDependencies,
   });
-  // Merge overrides and patches into the staged package.json for Bun.
+  // Merge overrides, patches, and trustedDependencies into the staged package.json for Bun.
   const sidecarPackageJson = {
     name: "t3code-server",
     version: input.appVersion,
@@ -2950,6 +2960,9 @@ export const stageWindowsServerSidecar = Effect.fn("stageWindowsServerSidecar")(
       : {}),
     ...(Object.keys(sidecarWorkspaceConfig.patches ?? {}).length > 0
       ? { patches: sidecarWorkspaceConfig.patches }
+      : {}),
+    ...((sidecarWorkspaceConfig.trustedDependencies ?? []).length > 0
+      ? { trustedDependencies: sidecarWorkspaceConfig.trustedDependencies }
       : {}),
   };
   const stagedPackageJsonString = yield* encodeJsonString(stagedPackageJson);
@@ -3699,8 +3712,9 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
   const stageWorkspaceConfig = createStageWorkspaceConfig({
     patches: stagePatchedDependencies,
     overrides: resolvedOverrides,
+    trustedDependencies: workspaceConfig.trustedDependencies,
   });
-  // Merge patches and overrides into the staged package.json for Bun.
+  // Merge patches, overrides, and trustedDependencies into the staged package.json for Bun.
   const stagedPackageWithConfig = {
     ...stagePackageJson,
     ...(Object.keys(stageWorkspaceConfig.overrides ?? {}).length > 0
@@ -3708,6 +3722,9 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
       : {}),
     ...(Object.keys(stageWorkspaceConfig.patches ?? {}).length > 0
       ? { patches: stageWorkspaceConfig.patches }
+      : {}),
+    ...((stageWorkspaceConfig.trustedDependencies ?? []).length > 0
+      ? { trustedDependencies: stageWorkspaceConfig.trustedDependencies }
       : {}),
   };
   const stagedPackageWithConfigString = yield* encodeJsonString(stagedPackageWithConfig);
@@ -3745,6 +3762,7 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
       fffNodeVersion: serverPackageJson.dependencies["@ff-labs/fff-node"],
       patchedDependencies: workspacePatchedDependencies,
       overrides: resolvedOverrides,
+      trustedDependencies: workspaceConfig.trustedDependencies ?? [],
       asarPath: windowsServerAsarPath,
       verbose: options.verbose,
     });

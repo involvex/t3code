@@ -49,6 +49,7 @@ type BuildArch = typeof BuildArch.Type;
 const WorkspaceConfig = Schema.Struct({
   overrides: Schema.optional(Schema.Record(Schema.String, Schema.String)),
   patches: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+  trustedDependencies: Schema.optional(Schema.Array(Schema.String)),
 });
 const decodeWorkspaceConfig = Schema.decodeEffect(Schema.fromJsonString(WorkspaceConfig));
 const encodeJsonString = Schema.encodeEffect(Schema.fromJsonString(Schema.Unknown));
@@ -161,7 +162,10 @@ const stageRuntimeExternals = Effect.fn("stageRuntimeExternals")(function* (inpu
   };
   const patchedDependencies = createStagePatchedDependencies(workspace.patches ?? {}, dependencies);
 
-  // Merge patches and overrides into the staged package.json for Bun.
+  // Merge patches, overrides, and trustedDependencies into the staged package.json for Bun.
+  // Trust must propagate: Bun blocks lifecycle scripts by default, so a stage
+  // without it installs unbuilt native modules.
+  const workspaceTrustedDependencies = workspace.trustedDependencies ?? [];
   const stagedPackageJson = {
     name: "t3-runtime",
     version: input.version,
@@ -172,6 +176,9 @@ const stageRuntimeExternals = Effect.fn("stageRuntimeExternals")(function* (inpu
       ? { overrides: resolveCatalogDependencies(workspace.overrides ?? {}, {}, "apps/server") }
       : {}),
     ...(Object.keys(patchedDependencies).length > 0 ? { patches: patchedDependencies } : {}),
+    ...(workspaceTrustedDependencies.length > 0
+      ? { trustedDependencies: [...workspaceTrustedDependencies] }
+      : {}),
   };
   yield* fs.writeFileString(
     path.join(input.stageDir, "package.json"),

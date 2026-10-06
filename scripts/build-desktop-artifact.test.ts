@@ -480,6 +480,27 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
       }),
       {},
     );
+
+    // Trusted dependencies propagate so staged Bun installs run lifecycle
+    // scripts; empty lists are omitted like the other maps.
+    assert.deepStrictEqual(
+      createStageWorkspaceConfig({
+        patches: {},
+        overrides: {},
+        trustedDependencies: ["electron", "node-pty"],
+      }),
+      {
+        trustedDependencies: ["electron", "node-pty"],
+      },
+    );
+    assert.deepStrictEqual(
+      createStageWorkspaceConfig({
+        patches: {},
+        overrides: {},
+        trustedDependencies: [],
+      }),
+      {},
+    );
   });
 
   it("limits Electron locales and excludes separately packaged resources", () => {
