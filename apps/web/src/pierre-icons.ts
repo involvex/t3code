@@ -40,6 +40,8 @@ export const T3_PIERRE_ICONS = {
     "agents.md": "t3-file-icon-agents",
     "pnpm-lock.yaml": "t3-file-icon-pnpm",
     "pnpm-workspace.yaml": "t3-file-icon-pnpm",
+    "bun.lock": "t3-file-icon-bun",
+    "bun.lockb": "t3-file-icon-bun",
   },
   byFileExtension: Object.fromEntries(
     VIDEO_FILE_EXTENSIONS.map((extension) => [extension, "t3-file-icon-video"]),

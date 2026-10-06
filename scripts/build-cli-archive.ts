@@ -29,14 +29,12 @@ import { Command, Flag } from "effect/cli";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
 import { HostProcessArchitecture, HostProcessPlatform } from "@t3tools/shared/hostProcess";
-import { fromYaml } from "@t3tools/shared/schemaYaml";
 import { resolveSpawnCommand } from "@t3tools/shared/shell";
 import rootPackageJson from "../package.json" with { type: "json" };
 import serverPackageJson from "../apps/server/package.json" with { type: "json" };
 
 import {
   createStagePatchedDependencies,
-  createStageWorkspaceConfig,
   resolveFffNativeDependencies,
   STAGE_INSTALL_ARGS,
 } from "./build-desktop-artifact.ts";
@@ -49,25 +47,11 @@ type BuildPlatform = typeof BuildPlatform.Type;
 type BuildArch = typeof BuildArch.Type;
 
 const WorkspaceConfig = Schema.Struct({
-  catalog: Schema.optional(Schema.Record(Schema.String, Schema.String)),
   overrides: Schema.optional(Schema.Record(Schema.String, Schema.String)),
-  patchedDependencies: Schema.optional(Schema.Record(Schema.String, Schema.String)),
-  allowBuilds: Schema.optional(Schema.Record(Schema.String, Schema.Boolean)),
+  patches: Schema.optional(Schema.Record(Schema.String, Schema.String)),
 });
-const decodeWorkspaceConfig = Schema.decodeEffect(fromYaml(WorkspaceConfig));
+const decodeWorkspaceConfig = Schema.decodeEffect(Schema.fromJsonString(WorkspaceConfig));
 const encodeJsonString = Schema.encodeEffect(Schema.fromJsonString(Schema.Unknown));
-const StageWorkspaceConfig = Schema.Struct({
-  supportedArchitectures: Schema.Struct({
-    os: Schema.Array(Schema.String),
-    cpu: Schema.Array(Schema.String),
-    libc: Schema.optional(Schema.Array(Schema.String)),
-  }),
-  allowBuilds: Schema.optional(Schema.Record(Schema.String, Schema.Boolean)),
-  patchedDependencies: Schema.optional(Schema.Record(Schema.String, Schema.String)),
-  overrides: Schema.optional(Schema.Record(Schema.String, Schema.String)),
-  nodeLinker: Schema.optional(Schema.Literals(["hoisted"])),
-});
-const encodeStageWorkspaceConfig = Schema.encodeEffect(fromYaml(StageWorkspaceConfig));
 
 const RepoRoot = Effect.service(Path.Path).pipe(
   Effect.flatMap((path) => path.fromFileUrl(new URL("..", import.meta.url))),
@@ -157,12 +141,11 @@ const stageRuntimeExternals = Effect.fn("stageRuntimeExternals")(function* (inpu
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const workspace = yield* decodeWorkspaceConfig(
-    yield* fs.readFileString(path.join(input.repoRoot, "pnpm-workspace.yaml")),
+    yield* fs.readFileString(path.join(input.repoRoot, "package.json")),
   );
-  const catalog = workspace.catalog ?? {};
   const serverDependencies = resolveCatalogDependencies(
     serverPackageJson.dependencies,
-    catalog,
+    {},
     "apps/server",
   );
   const fffNodeVersion = serverDependencies["@ff-labs/fff-node"];
@@ -176,39 +159,29 @@ const stageRuntimeExternals = Effect.fn("stageRuntimeExternals")(function* (inpu
     ...selectCliRuntimeExternalDependencies(serverDependencies),
     ...resolveFffNativeDependencies(input.platform, input.arch, fffNodeVersion),
   };
-  const patchedDependencies = createStagePatchedDependencies(
-    workspace.patchedDependencies ?? {},
-    dependencies,
-  );
+  const patchedDependencies = createStagePatchedDependencies(workspace.patches ?? {}, dependencies);
 
+  // Merge patches and overrides into the staged package.json for Bun.
+  const stagedPackageJson = {
+    name: "t3-runtime",
+    version: input.version,
+    private: true,
+    packageManager: rootPackageJson.packageManager,
+    dependencies,
+    ...(Object.keys(workspace.overrides ?? {}).length > 0
+      ? { overrides: resolveCatalogDependencies(workspace.overrides ?? {}, {}, "apps/server") }
+      : {}),
+    ...(Object.keys(patchedDependencies).length > 0 ? { patches: patchedDependencies } : {}),
+  };
   yield* fs.writeFileString(
     path.join(input.stageDir, "package.json"),
-    `${yield* encodeJsonString({
-      name: "t3-runtime",
-      version: input.version,
-      private: true,
-      packageManager: rootPackageJson.packageManager,
-      dependencies,
-    })}\n`,
-  );
-  yield* fs.writeFileString(
-    path.join(input.stageDir, "pnpm-workspace.yaml"),
-    yield* encodeStageWorkspaceConfig({
-      ...createStageWorkspaceConfig({
-        platform: input.platform,
-        arch: input.arch,
-        ...(workspace.allowBuilds ? { allowBuilds: workspace.allowBuilds } : {}),
-        patchedDependencies,
-        overrides: resolveCatalogDependencies(workspace.overrides ?? {}, catalog, "apps/server"),
-      }),
-      nodeLinker: "hoisted",
-    }),
+    `${yield* encodeJsonString(stagedPackageJson)}\n`,
   );
   if (Object.keys(patchedDependencies).length > 0) {
     yield* fs.copy(path.join(input.repoRoot, "patches"), path.join(input.stageDir, "patches"));
   }
 
-  const install = yield* resolveSpawnCommand("vp", [...STAGE_INSTALL_ARGS]);
+  const install = yield* resolveSpawnCommand("bun", STAGE_INSTALL_ARGS);
   yield* runCommand(
     ChildProcess.make(install.command, install.args, {
       cwd: input.stageDir,
@@ -216,10 +189,10 @@ const stageRuntimeExternals = Effect.fn("stageRuntimeExternals")(function* (inpu
       stdout: "inherit",
       stderr: "inherit",
     }),
-    "vp install --prod (cli archive runtime externals)",
+    "bun install --production (cli archive runtime externals)",
   );
 
-  // pnpm's bookkeeping and the manifest only matter to pnpm; the runtime
+  // pnpm/bookkeeping files and the manifest only mattered to pnpm; the runtime
   // resolves packages by directory. node-pty ships every platform's prebuilds
   // in one package (58 MB); only the archive's own platform loads.
   const platformKey = cliArchivePlatformKey(input.platform, input.arch);
@@ -231,8 +204,7 @@ const stageRuntimeExternals = Effect.fn("stageRuntimeExternals")(function* (inpu
   );
   for (const entry of [
     "package.json",
-    "pnpm-workspace.yaml",
-    "pnpm-lock.yaml",
+    "bun.lock",
     "patches",
     "node_modules/.pnpm",
     "node_modules/.modules.yaml",

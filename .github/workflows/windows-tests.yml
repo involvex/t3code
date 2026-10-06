@@ -38,7 +38,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       # setup-vp's own cache restores a Linux-shaped store on Windows, which is
-      # slower than no cache (see #7975). Cache pnpm's Windows store directly.
+      # slower than no cache (see #7975). Cache Bun's Windows store directly.
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1
         with:
@@ -49,16 +49,16 @@ jobs:
       - name: Resolve package cache path
         id: package_cache_path
         shell: pwsh
-        run: '"path=$(vp pm cache dir)" >> $env:GITHUB_OUTPUT'
+        run: '"path=$(bun pm cache dir)" >> $env:GITHUB_OUTPUT'
 
       - name: Cache packages
         uses: actions/cache@v6
         with:
           path: ${{ steps.package_cache_path.outputs.path }}
-          key: windows-tests-packages-v1-${{ hashFiles('pnpm-lock.yaml') }}
+          key: windows-tests-packages-v1-${{ hashFiles('bun.lock') }}
 
       - name: Install
-        run: vp install
+        run: bun install
 
       - name: Ensure Electron runtime is installed
         if: inputs.package == '' || inputs.package == 'apps/desktop'

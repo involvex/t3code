@@ -126,6 +126,10 @@ describe("resolveMarkdownLinkPresentation", () => {
       kind: "file",
       icon: "pnpm",
     });
+    expect(resolveMarkdownLinkPresentation("bun.lock")).toMatchObject({
+      kind: "file",
+      icon: "bun",
+    });
   });
 
   it("does not style app routes as file links", () => {

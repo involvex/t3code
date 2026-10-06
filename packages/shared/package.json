@@ -397,17 +397,17 @@
     "test": "vp test run --config ../../vite.config.ts --dir ."
   },
   "dependencies": {
-    "@noble/curves": "catalog:",
-    "@noble/hashes": "catalog:",
+    "@noble/curves": "1.9.1",
+    "@noble/hashes": "1.8.0",
     "@t3tools/contracts": "workspace:*",
-    "effect": "catalog:",
-    "jose": "catalog:",
-    "yaml": "catalog:"
+    "effect": "4.0.1",
+    "jose": "6.2.2",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@effect/platform-node": "catalog:",
-    "@effect/vitest": "catalog:",
-    "@types/node": "catalog:",
-    "vite-plus": "catalog:"
+    "@effect/platform-node": "4.0.1",
+    "@effect/vitest": "4.0.1",
+    "@types/node": "24.12.4",
+    "vite-plus": "1.0.0"
   }
 }

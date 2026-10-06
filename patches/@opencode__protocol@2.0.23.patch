@@ -642,7 +642,7 @@ index 64fe213..c835084 100644
  import { Event } from "@opencode/schema/event";
 -import { Context, Effect, Encoding, Result, Schema, SchemaGetter, Struct } from "effect";
 -import { HttpApiEndpoint, HttpApiGroup, HttpApiMiddleware, HttpApiSchema, OpenApi } from "effect/unstable/httpapi";
-+import * as Base64Url from "effect/encoding/Base64Url";
++import { Base64Url } from "effect/encoding";
 +import { Context, Effect, Result, Schema, SchemaGetter, Struct } from "effect";
 +import { HttpApiEndpoint, HttpApiGroup, HttpApiMiddleware, HttpApiSchema, OpenApi } from "effect/http-api";
  import { ConflictError, LocationNotFoundError, CommandExecutionError, CommandNotFoundError, FormAlreadySettledError, FormInvalidAnswerError, FormNotFoundError, InvalidCursorError, InvalidRequestError, MessageNotFoundError, ServiceUnavailableError, SessionBusyError, SessionNotFoundError, SkillNotFoundError, UnknownError, } from "../errors.js";

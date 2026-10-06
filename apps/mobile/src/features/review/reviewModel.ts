@@ -1,5 +1,5 @@
-import { parsePatchFiles } from "@pierre/diffs/utils/parsePatchFiles";
-import type { ChangeTypes, FileDiffMetadata } from "@pierre/diffs/types";
+import { parsePatchFiles } from "@pierre/diffs";
+import type { ChangeTypes, FileDiffMetadata } from "@pierre/diffs";
 import type { ThreadCheckpointSummary } from "@t3tools/client-runtime/state/thread-checkpoints";
 import type { ReviewDiffPreviewSource } from "@t3tools/contracts";
 import { unquoteGitPatchPath } from "@t3tools/shared/gitPatchPath";

@@ -117,6 +117,8 @@ const FILE_ICON_BY_NAME: Readonly<Record<string, MarkdownFileIcon>> = {
   "next.config.mts": "nextjs",
   "next.config.ts": "nextjs",
   "package.json": "npm",
+  "bun.lock": "bun",
+  "bun.lockb": "bun",
   "pnpm-lock.yaml": "pnpm",
   "pnpm-workspace.yaml": "pnpm",
   "postcss.config.js": "postcss",

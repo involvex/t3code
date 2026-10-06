@@ -135,7 +135,7 @@ jobs:
           cache: true
           run-install: true
         env:
-          pnpm_config_cache_dir: ${{ runner.temp }}/pnpm-metadata
+          BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/bun-metadata
 
       - id: release_meta
         name: Resolve release version
@@ -228,7 +228,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-dependency-verification
-          path: ${{ runner.temp }}/pnpm-metadata/lockfile-verified.jsonl
+          path: ${{ runner.temp }}/bun-metadata/lockfile-verified.jsonl
 
   quality:
     name: Release quality checks
@@ -477,19 +477,19 @@ jobs:
           cache: true
           run-install: false
 
-      # pnpm checks the lockfile and policy before reusing this result. A missing
+      # Bun checks the lockfile before reusing this result. A missing
       # artifact leaves the cache empty, so installation runs the checks again.
       - name: Download dependency verification
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           name: release-dependency-verification
-          path: ${{ runner.temp }}/pnpm-metadata
+          path: ${{ runner.temp }}/bun-metadata
 
       - name: Install bundle dependencies
         env:
-          pnpm_config_cache_dir: ${{ runner.temp }}/pnpm-metadata
-        run: vp install --filter=t3... --filter=@t3tools/web... --filter=@t3tools/desktop... --filter=@t3tools/scripts...
+          BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/bun-metadata
+        run: bun install --frozen-lockfile
 
       - name: Download relay client tracing config
         uses: actions/download-artifact@v8
@@ -1010,7 +1010,7 @@ jobs:
         run: node scripts/update-release-package-versions.ts "${{ needs.preflight.outputs.version }}"
 
       - name: Refresh release lockfile
-        run: vp install --lockfile-only --ignore-scripts
+        run: bun install --no-save
 
       - id: deploy
         name: Build staged deployment
@@ -1295,7 +1295,7 @@ jobs:
 
       - name: Refresh lockfile
         if: steps.update_versions.outputs.changed == 'true'
-        run: vp install --lockfile-only --ignore-scripts
+        run: bun install --no-save
 
       - name: Commit and push version bump
         if: steps.update_versions.outputs.changed == 'true'
@@ -1303,7 +1303,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
         run: |
-          if git diff --quiet -- apps/server/package.json apps/desktop/package.json apps/web/package.json packages/contracts/package.json pnpm-lock.yaml; then
+          if git diff --quiet -- apps/server/package.json apps/desktop/package.json apps/web/package.json packages/contracts/package.json bun.lock; then
             echo "No version changes to commit."
             exit 0
           fi
@@ -1311,7 +1311,7 @@ jobs:
           git config user.name "${{ steps.app_bot.outputs.name }}"
           git config user.email "${{ steps.app_bot.outputs.email }}"
 
-          git add apps/server/package.json apps/desktop/package.json apps/web/package.json packages/contracts/package.json pnpm-lock.yaml
+          git add apps/server/package.json apps/desktop/package.json apps/web/package.json packages/contracts/package.json bun.lock
           git commit -m "chore(release): prepare $RELEASE_TAG"
           git push origin HEAD:main
 

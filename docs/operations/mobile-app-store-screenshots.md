@@ -17,7 +17,7 @@ Environments screen. The local environment cards always come from real paired se
 
 From the repository root:
 
-    pnpm screenshots:mobile
+    bunx screenshots:mobile
 
 The command:
 
@@ -52,7 +52,7 @@ verify process ownership. Concurrent screenshot harnesses in different worktrees
 collide or attach to the wrong Metro process.
 
 Every configured device defaults to dark appearance and the `t3-code` palette, so plain
-`pnpm screenshots:mobile` produces 35 dark PNGs. Pass `--appearance light`, `--appearance dark`, or
+`bunx screenshots:mobile` produces 35 dark PNGs. Pass `--appearance light`, `--appearance dark`, or
 `--appearance both` to override the configured appearance; `both` produces 70 PNGs.
 
 Pass `--theme <id>` (repeatable) or `--theme all` to capture the app's other palettes: `t3-code`,
@@ -131,46 +131,46 @@ debug APK matches its accelerated emulator.
 
 Capture one scene or device:
 
-    pnpm screenshots:mobile --device iphone-6.9 --scene thread
-    pnpm screenshots:mobile --platform android --scene review
+    bunx screenshots:mobile --device iphone-6.9 --scene thread
+    bunx screenshots:mobile --platform android --scene review
 
 Override the configured appearance or capture both variants:
 
-    pnpm screenshots:mobile --appearance light
-    pnpm screenshots:mobile --appearance dark
-    pnpm screenshots:mobile --appearance both
+    bunx screenshots:mobile --appearance light
+    bunx screenshots:mobile --appearance dark
+    bunx screenshots:mobile --appearance both
 
 Capture other palettes:
 
-    pnpm screenshots:mobile --device iphone-6.9 --theme ocean
-    pnpm screenshots:mobile --device iphone-6.9 --theme ocean --theme ember
-    pnpm screenshots:mobile --device iphone-6.9 --theme all
+    bunx screenshots:mobile --device iphone-6.9 --theme ocean
+    bunx screenshots:mobile --device iphone-6.9 --theme ocean --theme ember
+    bunx screenshots:mobile --device iphone-6.9 --theme all
 
 Reuse the native build and retain the disposable environment:
 
-    pnpm screenshots:mobile --device ipad-13 --skip-build --keep-running
+    bunx screenshots:mobile --device ipad-13 --skip-build --keep-running
 
 By default, let the screenshot runner start Metro on port `8199`. To keep Metro in a separate
 terminal, start it with the same showcase environment and explicit harness port:
 
     cd apps/mobile
-    APP_VARIANT=development EXPO_PUBLIC_SHOWCASE=1 pnpm exec expo start --dev-client --port 8199
+    APP_VARIANT=development EXPO_PUBLIC_SHOWCASE=1 bunx expo start --dev-client --port 8199
 
 Then run the capture from the repository root:
 
-    pnpm screenshots:mobile --skip-build --skip-metro --device iphone-6.9
+    bunx screenshots:mobile --skip-build --skip-metro --device iphone-6.9
 
-`pnpm --filter @t3tools/mobile showcase` starts Expo on its normal port, so it is not compatible with
+`bunx --filter @t3tools/mobile showcase` starts Expo on its normal port, so it is not compatible with
 the harness's `--skip-metro` mode.
 
 List the matrix and flags:
 
-    pnpm screenshots:mobile --list
+    bunx screenshots:mobile --list
 
 Validate existing files without starting Metro, servers, simulators, or emulators:
 
-    pnpm screenshots:mobile --validate-only
-    pnpm screenshots:mobile --platform ios --validate-only
+    bunx screenshots:mobile --validate-only
+    bunx screenshots:mobile --platform ios --validate-only
 
 ## Customize the seeded environment
 

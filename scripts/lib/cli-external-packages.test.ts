@@ -97,9 +97,9 @@ describe("selectCliRuntimeExternalDependencies", () => {
 // required detect-libc, which was bundled. Windows was fine; WSL got
 // MODULE_NOT_FOUND.
 it.layer(NodeServices.layer)("external package dependency closure", (it) => {
-  // Read manifests off disk from the pnpm store rather than resolving them.
-  // `require("<name>/package.json")` cannot do this job: under pnpm isolation a
-  // transitive package (node-addon-api, ffi-rs) is not reachable
+  // Read manifests off disk from node_modules (Bun flat layout or pnpm store)
+  // rather than resolving them. `require("<name>/package.json")` cannot do this
+  // job: under isolated layouts a transitive package is not reachable
   // by name from this file at all, and an `exports` map can refuse the
   // `/package.json` subpath outright (@ff-labs/fff-node). Both surface as "not
   // installed", which would let this test skip everything and pass while
@@ -108,37 +108,66 @@ it.layer(NodeServices.layer)("external package dependency closure", (it) => {
   const readInstalledPackages = Effect.gen(function* () {
     const fileSystem = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    const storeDir = path.resolve(
-      path.dirname(NodeURL.fileURLToPath(import.meta.url)),
-      "../../node_modules/.pnpm",
-    );
 
-    // The store holds regular files too (lock.yaml), so a path built under one
-    // raises ENOTDIR rather than reporting absence. That throws on Linux while
-    // Windows quietly returns false, which is exactly the kind of difference
-    // this test exists to catch, so treat any failure as "not there".
     const isPresent = (candidate: string) =>
       fileSystem.exists(candidate).pipe(Effect.orElseSucceed(() => false));
 
+    // Try Bun's flat layout first, then fall back to pnpm's store layout.
+    const rootNodeModules = path.resolve(
+      path.dirname(NodeURL.fileURLToPath(import.meta.url)),
+      "../../node_modules",
+    );
+    const pnpmStore = path.join(rootNodeModules, ".pnpm");
+
     const installed = new Map<string, PackageManifest>();
-    if (!(yield* isPresent(storeDir))) return installed;
+    if (yield* isPresent(pnpmStore)) {
+      // pnpm layout: .pnpm/<package>@<version>/node_modules/<package>
+      for (const entry of yield* fileSystem.readDirectory(pnpmStore)) {
+        const modulesDir = path.join(pnpmStore, entry, "node_modules");
+        if (!(yield* isPresent(modulesDir))) continue;
 
-    for (const entry of yield* fileSystem.readDirectory(storeDir)) {
-      const modulesDir = path.join(storeDir, entry, "node_modules");
-      if (!(yield* isPresent(modulesDir))) continue;
+        for (const owner of yield* fileSystem.readDirectory(modulesDir)) {
+          const names = owner.startsWith("@")
+            ? (yield* fileSystem.readDirectory(path.join(modulesDir, owner))).map(
+                (scoped) => `${owner}/${scoped}`,
+              )
+            : [owner];
 
-      for (const owner of yield* fileSystem.readDirectory(modulesDir)) {
-        const names = owner.startsWith("@")
-          ? (yield* fileSystem.readDirectory(path.join(modulesDir, owner))).map(
-              (scoped) => `${owner}/${scoped}`,
-            )
-          : [owner];
+          for (const name of names) {
+            if (installed.has(name)) continue;
+            const manifestPath = path.join(modulesDir, name, "package.json");
+            if (!(yield* isPresent(manifestPath))) continue;
+            installed.set(name, decodeManifest(yield* fileSystem.readFileString(manifestPath)));
+          }
+        }
+      }
+    }
+    if (yield* isPresent(rootNodeModules)) {
+      // Bun flat layout: node_modules/<package>
+      for (const entry of yield* fileSystem.readDirectory(rootNodeModules)) {
+        if (entry.startsWith(".")) continue; // skip .bin, .cache, etc.
+        if (installed.has(entry)) continue;
 
-        for (const name of names) {
-          if (installed.has(name)) continue;
-          const manifestPath = path.join(modulesDir, name, "package.json");
-          if (!(yield* isPresent(manifestPath))) continue;
-          installed.set(name, decodeManifest(yield* fileSystem.readFileString(manifestPath)));
+        const isScoped = entry.startsWith("@");
+        const checkPath = (name: string) => path.join(rootNodeModules, name, "package.json");
+
+        if (yield* isPresent(checkPath(entry))) {
+          installed.set(entry, decodeManifest(yield* fileSystem.readFileString(checkPath(entry))));
+          continue;
+        }
+        if (isScoped) {
+          const scopedDir = path.join(rootNodeModules, entry);
+          if (!(yield* isPresent(scopedDir))) continue;
+          for (const scoped of yield* fileSystem.readDirectory(scopedDir)) {
+            const scopedName = `${entry}/${scoped}`;
+            if (installed.has(scopedName)) continue;
+            if (yield* isPresent(checkPath(scopedName))) {
+              installed.set(
+                scopedName,
+                decodeManifest(yield* fileSystem.readFileString(checkPath(scopedName))),
+              );
+            }
+          }
         }
       }
     }
@@ -149,7 +178,7 @@ it.layer(NodeServices.layer)("external package dependency closure", (it) => {
   // loaded by Node, so their closure genuinely does not need to be external.
   const isRuntimeExternal = isRuntimeExternalCliDependency;
 
-  // A cold walk of the pnpm store can exceed the root timeout when the Windows
+  // A cold walk of node_modules can exceed the root timeout when the Windows
   // lane runs four filesystem-heavy workspace suites at once.
   it.effect(
     "finds the runtime-external packages on disk",
@@ -165,7 +194,7 @@ it.layer(NodeServices.layer)("external package dependency closure", (it) => {
         for (const required of ["node-pty", "node-addon-api"]) {
           assert.ok(
             found.includes(required),
-            `expected ${required} in the pnpm store; the closure check is only meaningful if it can read these (found ${found.length})`,
+            `expected ${required} in the package store; the closure check is only meaningful if it can read these (found ${found.length})`,
           );
         }
       }),
@@ -265,7 +294,7 @@ var x = 1;
     assert.deepStrictEqual(result.inlined, []);
   });
 
-  it("does not report the pnpm store directory as a package", () => {
+  it("does not report the store directory as a package", () => {
     const result = findInlinedExternalPackages(
       region("../../node_modules/.pnpm/effect@4.0.0/node_modules/effect/dist/index.js"),
     );

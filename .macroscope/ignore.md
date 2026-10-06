@@ -89,6 +89,7 @@ ENV/**
 # === Lock / sum files ===
 **/go.sum
 **/package-lock.json
+**/bun.lock
 **/pnpm-lock.yaml
 **/yarn.lock
 **/Package.resolved

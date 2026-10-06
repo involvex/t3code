@@ -38,14 +38,14 @@ const PROJECT_SCRIPTS = JSON.stringify([
   {
     id: "dev",
     name: "Dev",
-    command: "pnpm dev",
+    command: "bun run dev",
     icon: "play",
     runOnWorktreeCreate: false,
   },
   {
     id: "test",
     name: "Tests",
-    command: "pnpm test",
+    command: "bun run test",
     icon: "test",
     runOnWorktreeCreate: false,
   },

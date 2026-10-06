@@ -7,12 +7,12 @@
     "test": "vp test run --config ../vite.config.ts --dir ."
   },
   "dependencies": {
-    "@effect/platform-node": "catalog:",
+    "@effect/platform-node": "4.0.1",
     "@oxlint/plugins": "^1.63.0",
-    "effect": "catalog:"
+    "effect": "4.0.1"
   },
   "devDependencies": {
-    "@effect/vitest": "catalog:",
-    "vite-plus": "catalog:"
+    "@effect/vitest": "4.0.1",
+    "vite-plus": "1.0.0"
   }
 }

@@ -16,6 +16,7 @@ const GENERATED_FILE_NAMES = new Set([
   "yarn.lock",
   "package-lock.json",
   "bun.lockb",
+  "bun.lock",
   "Cargo.lock",
   "go.sum",
   "composer.lock",

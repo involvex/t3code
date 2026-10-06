@@ -10,7 +10,7 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
-const root = process.cwd();
+const root = path.resolve(__dirname, "..");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const patches = packageJson.patches || {};
 const bunDir = path.join(root, "node_modules/.bun");
@@ -83,21 +83,12 @@ for (const [pkgName, patchPath] of Object.entries(patches)) {
 
 console.log(`\nPatch summary: ${applied} applied, ${skipped} skipped, ${failed} failed`);
 
-// Fallback: direct string replacements for @opencode/* effect/unstable + Encoding
-// fixes. Needed because `git apply` fails when a patch was partially applied
-// (e.g. manual edit + rerun reports "Skipped patch"), and Bun may ignore the
-// root `patches` field on reinstall. This is idempotent — reruns are no-ops.
+// Content-based backstop: applies every hunk from patches/*.patch by exact
+// content matching, since `git apply` silently skips hunks when run inside
+// this repo. Deterministic and idempotent. Patch files stay canonical.
 try {
-  require("./fix-opencode-patches.cjs");
+  require("./apply-content-patches.cjs");
 } catch (error) {
-  console.error("Fallback opencode fix failed:", error.message);
-}
-
-// Same story for patches/effect@4.0.1.patch: valid patch, but `git apply`
-// skips every hunk inside this repo (exit 0 + "Skipped patch") while applying
-// cleanly outside it. Deterministic string replacement instead.
-try {
-  require("./fix-effect-patch.cjs");
-} catch (error) {
-  console.error("Fallback effect fix failed:", error.message);
+  console.error("Content patch fallback failed:", error.message);
+  process.exitCode = 1;
 }

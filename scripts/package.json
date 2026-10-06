@@ -7,20 +7,20 @@
     "test": "vp test run --config ../vite.config.ts --dir ."
   },
   "dependencies": {
-    "@effect/platform-node": "catalog:",
+    "@effect/platform-node": "4.0.1",
     "@electron/asar": "^4.3.0",
     "@electron/osx-sign": "2.7.0",
     "@t3tools/shared": "workspace:*",
     "@t3tools/tailscale": "workspace:*",
-    "effect": "catalog:",
+    "effect": "4.0.1",
     "pngjs": "7.0.0",
     "sharp": "0.35.4"
   },
   "devDependencies": {
-    "@effect/vitest": "catalog:",
+    "@effect/vitest": "4.0.1",
     "@types/pngjs": "6.0.5",
-    "typescript": "catalog:",
+    "typescript": "7.0.2",
     "typescript-legacy": "npm:typescript@~6.0.3",
-    "vite-plus": "catalog:"
+    "vite-plus": "1.0.0"
   }
 }

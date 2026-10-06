@@ -179,3 +179,17 @@ index 07706139379384dae27befef4e3e5ae09d04a0db..924fa0029243664e369ce08c81e504b6
    /**
     * Whether the activity is displayed in a context with reduced luminance.
     * @platform iOS 16+
+diff --git a/layout-registry.metro.config.js b/layout-registry.metro.config.js
+--- a/layout-registry.metro.config.js
++++ b/layout-registry.metro.config.js
+@@ -5,4 +5,9 @@ const baseResolveRequest = config.resolver.resolveRequest;
+ const expoWidgetsStubPath = path.join(__dirname, 'bundle/layout-registry-stub.ts');
+ const asyncRequireStubPath = path.join(__dirname, 'bundle/async-require-stub.ts');
+ // const emptyModuleStubPath = path.join(__dirname, 'bundle/empty-module-stub.js');
+-const fileSpecifierRe = /^[\\/]|^\.\.?(?:$|[\\/])/i;
++// Windows drive-letter absolute paths (e.g. I:\...) match neither /^[\\/] nor
++// relative specifiers, so without the third alternative every absolute request
++// falls through to empty type - including Metro's own empty-module
++// shim, which recurses resolveDependency into _getEmptyModule until the stack
++// blows up (RangeError in :expo-widgets:generateExpoWidgetsLayoutRegistry).
++const fileSpecifierRe = /^[\\/]|^\.\.?(?:$|[\\/])|^[A-Za-z]:[\\/]/i;

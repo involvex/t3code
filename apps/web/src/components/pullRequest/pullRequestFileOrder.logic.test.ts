@@ -27,6 +27,8 @@ describe("orderDiffFiles", () => {
       "dist/app.js",
       "packages/core/vendor/lib.js",
       "pnpm-lock.yaml",
+      "bun.lock",
+      "bun.lockb",
       "public/app.min.js",
       "src/__snapshots__/app.ts",
       "src/api.generated.ts",

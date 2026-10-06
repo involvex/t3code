@@ -43,5 +43,5 @@ node_modules/
 .env*
 !.env.example
 
-# pnpm content-addressable store; never belongs in the repo.
-.pnpm-store/
+# Bun global cache; never belongs in the repo.
+.bun/

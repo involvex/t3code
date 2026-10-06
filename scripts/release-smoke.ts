@@ -11,8 +11,7 @@ const repoRoot = NodePath.resolve(NodePath.dirname(NodeURL.fileURLToPath(import.
 
 const workspaceFiles = [
   "package.json",
-  "pnpm-lock.yaml",
-  "pnpm-workspace.yaml",
+  "bun.lock",
   "apps/server/package.json",
   "apps/desktop/package.json",
   "apps/web/package.json",
@@ -209,15 +208,13 @@ try {
     },
   );
 
-  NodeFS.rmSync(NodePath.resolve(tempRoot, "pnpm-lock.yaml"), { force: true });
-
-  NodeChildProcess.execFileSync("vp", ["install", "--lockfile-only", "--ignore-scripts"], {
+  NodeChildProcess.execFileSync("bun", ["install", "--no-save"], {
     cwd: tempRoot,
     stdio: "inherit",
   });
 
-  const lockfile = NodeFS.readFileSync(NodePath.resolve(tempRoot, "pnpm-lock.yaml"), "utf8");
-  assertContains(lockfile, "lockfileVersion:", "Expected pnpm-lock.yaml to be regenerated.");
+  const lockfile = NodeFS.readFileSync(NodePath.resolve(tempRoot, "bun.lock"), "utf8");
+  assertContains(lockfile, "lockfileVersion:", "Expected bun.lock to be regenerated.");
 
   for (const relativePath of [
     "apps/server/package.json",

@@ -1,6 +1,6 @@
-import { parsePatchFiles } from "@pierre/diffs/utils/parsePatchFiles";
+import { parsePatchFiles } from "@pierre/diffs";
 import { parseDiffFromFile } from "@pierre/diffs";
-import type { FileDiffMetadata } from "@pierre/diffs/types";
+import type { FileDiffMetadata } from "@pierre/diffs";
 import { unquoteGitPatchPath } from "@t3tools/shared/gitPatchPath";
 
 const DIFF_THEME_NAMES = {

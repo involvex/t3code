@@ -69,12 +69,12 @@ jobs:
               - --filter=@t3tools/scripts...
               - --filter=t3...
 
-      - name: Expose pnpm
+      - name: Expose Bun
         run: |
-          pnpm_version="$(node --print "require('./package.json').packageManager.split('@').pop()")"
-          vp_pnpm_bin="$HOME/.vite-plus/package_manager/pnpm/$pnpm_version/pnpm/bin"
-          echo "$vp_pnpm_bin" >> "$GITHUB_PATH"
-          "$vp_pnpm_bin/pnpm" --version
+          bun_version="$(node --print "require('./package.json').packageManager.split('@').pop()")"
+          bun_bin="$HOME/.vite-plus/package_manager/bun/$bun_version/bin"
+          echo "$bun_bin" >> "$GITHUB_PATH"
+          bun --version
 
       - name: Install AXe
         # Locks the simulator and answers the notification prompt for the
@@ -88,10 +88,10 @@ jobs:
           axe --version
 
       - name: Capture iOS showcase
-        run: pnpm screenshots:mobile --platform ios --appearance "${{ inputs.appearance }}" --theme "${{ inputs.theme }}"
+        run: bunx screenshots:mobile --platform ios --appearance "${{ inputs.appearance }}" --theme "${{ inputs.theme }}"
 
       - name: Validate App Store Connect assets
-        run: pnpm screenshots:mobile --platform ios --appearance "${{ inputs.appearance }}" --theme "${{ inputs.theme }}" --validate-only
+        run: bunx screenshots:mobile --platform ios --appearance "${{ inputs.appearance }}" --theme "${{ inputs.theme }}" --validate-only
 
       - name: Upload iOS screenshots
         if: always()
@@ -131,12 +131,12 @@ jobs:
               - --filter=@t3tools/scripts...
               - --filter=t3...
 
-      - name: Expose pnpm
+      - name: Expose Bun
         run: |
-          pnpm_version="$(node --print "require('./package.json').packageManager.split('@').pop()")"
-          vp_pnpm_bin="$HOME/.vite-plus/package_manager/pnpm/$pnpm_version/pnpm/bin"
-          echo "$vp_pnpm_bin" >> "$GITHUB_PATH"
-          "$vp_pnpm_bin/pnpm" --version
+          bun_version="$(node --print "require('./package.json').packageManager.split('@').pop()")"
+          bun_bin="$HOME/.vite-plus/package_manager/bun/$bun_version/bin"
+          echo "$bun_bin" >> "$GITHUB_PATH"
+          bun --version
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -165,10 +165,10 @@ jobs:
           cores: 8
           ram-size: 4096M
           disable-animations: false
-          script: pnpm screenshots:mobile --platform android --appearance "${{ inputs.appearance }}" --theme "${{ inputs.theme }}"
+          script: bunx screenshots:mobile --platform android --appearance "${{ inputs.appearance }}" --theme "${{ inputs.theme }}"
 
       - name: Validate Google Play assets
-        run: pnpm screenshots:mobile --platform android --appearance "${{ inputs.appearance }}" --theme "${{ inputs.theme }}" --validate-only
+        run: bunx screenshots:mobile --platform android --appearance "${{ inputs.appearance }}" --theme "${{ inputs.theme }}" --validate-only
 
       - name: Upload Android screenshots
         if: always()

@@ -142,19 +142,19 @@ jobs:
           cache: ${{ inputs.platform != 'win' }}
           run-install: false
 
-      # pnpm checks the lockfile and policy before reusing this result. A missing
+      # Bun checks the lockfile and policy before reusing this result. A missing
       # artifact leaves the cache empty, so installation runs the checks again.
       - name: Download dependency verification
         continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: release-dependency-verification
-          path: ${{ runner.temp }}/pnpm-metadata
+          path: ${{ runner.temp }}/bun-metadata
 
       - name: Install desktop dependencies
         env:
-          pnpm_config_cache_dir: ${{ runner.temp }}/pnpm-metadata
-        run: vp install --filter=@t3tools/desktop... --filter=t3... --filter=@t3tools/scripts...
+          BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/bun-metadata
+        run: bun install --frozen-lockfile
 
       - name: Cache resource monitor
         id: resource_monitor_cache
@@ -373,7 +373,7 @@ jobs:
       - name: Build desktop artifact
         shell: bash
         env:
-          pnpm_config_cache_dir: ${{ runner.temp }}/pnpm-metadata
+          BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/bun-metadata
           T3CODE_DESKTOP_REUSE_RESOURCE_MONITOR: ${{ steps.resource_monitor_cache.outputs.cache-hit == 'true' }}
           T3CODE_DESKTOP_REUSE_LINUX_CAPTURE_HELPERS: ${{ steps.capture_helper_cache.outputs.cache-hit == 'true' }}
           CSC_LINK: ${{ secrets.CSC_LINK }}

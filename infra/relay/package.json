@@ -11,26 +11,26 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/backend": "catalog:",
-    "@effect/sql-pg": "catalog:",
-    "@effect/sql-sqlite-do": "catalog:",
-    "@noble/curves": "catalog:",
-    "@noble/hashes": "catalog:",
+    "@clerk/backend": "3.18.1",
+    "@effect/sql-pg": "4.0.1",
+    "@effect/sql-sqlite-do": "4.0.1",
+    "@noble/curves": "1.9.1",
+    "@noble/hashes": "1.8.0",
     "@t3tools/client-runtime": "workspace:*",
     "@t3tools/contracts": "workspace:*",
     "@t3tools/shared": "workspace:*",
     "alchemy": "2.0.0-beta.80",
     "drizzle-orm": "1.0.0-rc.5-ab785fc",
-    "effect": "catalog:"
+    "effect": "4.0.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260601.1",
-    "@effect/platform-node": "catalog:",
-    "@effect/vitest": "catalog:",
-    "@types/node": "catalog:",
+    "@effect/platform-node": "4.0.1",
+    "@effect/vitest": "4.0.1",
+    "@types/node": "24.12.4",
     "drizzle-kit": "1.0.0-rc.5-ab785fc",
-    "typescript": "catalog:",
-    "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "typescript": "7.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vite-plus": "1.0.0"
   }
 }
