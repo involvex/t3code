@@ -1,8 +1,16 @@
 {
   "name": "@t3tools/monorepo",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "infra/*",
+    "oxlint-plugin-t3code",
+    "packages/*",
+    "scripts"
+  ],
   "type": "module",
   "scripts": {
+    "postinstall": "node scripts/apply-patches.cjs",
     "prepare": "effect-tsgo patch && vp config --no-agent",
     "dev": "node scripts/dev-runner.ts dev",
     "dev:share": "node scripts/dev-runner.ts dev --share",
@@ -47,19 +55,112 @@
     "dist:desktop:win:arm64": "node scripts/build-desktop-artifact.ts --platform win --target nsis --arch arm64",
     "dist:desktop:win:x64": "node scripts/build-desktop-artifact.ts --platform win --target nsis --arch x64",
     "release:smoke": "node scripts/release-smoke.ts",
-    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules apps/*/dist apps/*/dist-electron packages/*/dist .vite-plus apps/*/.vite-plus packages/*/.vite-plus",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules apps/*/dist apps/*/dist-electron packages/*/dist .vite-plus apps/*/.vite-plus packages/*/.vite-plus .bun",
     "sync:repos": "node scripts/sync-reference-repos.ts"
   },
   "devDependencies": {
-    "@effect/tsgo": "catalog:",
+    "@effect/tsgo": "0.41.0",
     "@shadcn/lint": "0.1.5",
-    "@types/node": "catalog:",
+    "@types/node": "24.12.4",
     "knip": "6.34.0",
-    "typescript": "catalog:",
-    "vite-plus": "catalog:"
+    "typescript": "7.0.2",
+    "vite-plus": "1.0.0"
+  },
+  "overrides": {
+    "@alchemy.run/sigil": {
+      "react": "0",
+      "react-reconciler": "0"
+    },
+    "@anthropic-ai/claude-agent-sdk": {
+      "@anthropic-ai/claude-agent-sdk-darwin-arm64": "0",
+      "@anthropic-ai/claude-agent-sdk-darwin-x64": "0",
+      "@anthropic-ai/claude-agent-sdk-linux-arm64": "0",
+      "@anthropic-ai/claude-agent-sdk-linux-arm64-musl": "0",
+      "@anthropic-ai/claude-agent-sdk-linux-x64": "0",
+      "@anthropic-ai/claude-agent-sdk-linux-x64-musl": "0",
+      "@anthropic-ai/claude-agent-sdk-win32-arm64": "0",
+      "@anthropic-ai/claude-agent-sdk-win32-x64": "0"
+    },
+    "@clerk/backend": "3.18.1",
+    "@clerk/clerk-js": "6.32.1",
+    "@clerk/electron": "0.0.44",
+    "@clerk/electron-passkeys": "0.0.3",
+    "@clerk/expo": "4.6.8",
+    "@clerk/react": "6.16.1",
+    "@clerk/shared": "4.33.0",
+    "@effect/atom-react": "4.0.1",
+    "@effect/platform-node": "4.0.1",
+    "@effect/platform-node-shared": "4.0.1",
+    "@effect/sql-pg": "4.0.1",
+    "@effect/vitest": {
+      "vite-plus": "1.0.0",
+      "vitest": "0.0.1"
+    },
+    "@exodus/bytes": {
+      "@noble/hashes": "1.8.0"
+    },
+    "@expo/dom-webview": "58.0.2",
+    "@expo/metro-config": "58.0.6",
+    "@pierre/diffs": {
+      "@shikijs/transformers": "^4.2.0"
+    },
+    "@react-navigation/core": "7.21.13",
+    "@tailwindcss/node": "4.3.3",
+    "@tailwindcss/oxide": "4.3.3",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "24.12.4",
+    "alchemy": {
+      "scheduler": "0",
+      "@prisma/dev": "0"
+    },
+    "dbus-next": {
+      "usocket": "0"
+    },
+    "effect": "4.0.1",
+    "expo-constants": "58.0.9",
+    "expo-router": "58.0.10",
+    "expo-sharing": {
+      "@expo/config-plugins": "58.0.4",
+      "@expo/config-types": "58.0.2"
+    },
+    "lightningcss": "1.33.0",
+    "node-abi": "4.33.0",
+    "tailwindcss": "4.3.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vite-plus": "1.0.0",
+    "yaml": "^2.9.0"
   },
   "engines": {
+    "bun": ">=1.4.0",
     "node": "^24.13.1"
   },
-  "packageManager": "pnpm@11.10.0"
+  "packageManager": "bun@1.4.3",
+  "patches": {
+    "alchemy": "./patches/alchemy@2.0.0-beta.80.patch",
+    "expo-glass-effect": "./patches/expo-glass-effect@58.0.3.patch",
+    "expo-blur": "./patches/expo-blur@58.0.3.patch",
+    "expo-audio": "./patches/expo-audio@58.0.4.patch",
+    "@clerk/expo": "./patches/@clerk__expo@4.6.8.patch",
+    "@effect/vitest": "./patches/@effect__vitest@4.0.1.patch",
+    "@expo/metro-config": "./patches/@expo__metro-config@58.0.6.patch",
+    "expo-sharing": "./patches/expo-sharing@58.0.13.patch",
+    "expo-widgets": "./patches/expo-widgets@58.0.11.patch",
+    "@ff-labs/fff-node": "./patches/@ff-labs__fff-node@0.9.4.patch",
+    "@legendapp/list": "./patches/@legendapp__list@3.3.5.patch",
+    "@opencode/client": "./patches/@opencode__client@2.0.23.patch",
+    "@opencode/protocol": "./patches/@opencode__protocol@2.0.23.patch",
+    "@opencode/schema": "./patches/@opencode__schema@2.0.23.patch",
+    "@pierre/diffs": "./patches/@pierre%2Fdiffs@1.3.0-beta.10.patch",
+    "@react-native-ai/apple": "./patches/@react-native-ai__apple@0.12.0.patch",
+    "@react-native-menu/menu": "./patches/@react-native-menu__menu@2.0.0.patch",
+    "@react-navigation/native-stack": "./patches/@react-navigation%2Fnative-stack@7.17.6.patch",
+    "dbus-next": "./patches/dbus-next@0.10.2.patch",
+    "effect": "./patches/effect@4.0.1.patch",
+    "node-pty": "./patches/node-pty@1.2.0-beta.15.patch",
+    "react-native-nitro-markdown": "./patches/react-native-nitro-markdown@0.5.8.patch",
+    "react-native-gesture-handler": "./patches/react-native-gesture-handler@3.2.1.patch",
+    "react-native-keyboard-controller": "./patches/react-native-keyboard-controller@1.22.6.patch",
+    "react-native-nitro-modules": "./patches/react-native-nitro-modules@0.35.9.patch",
+    "react-native-screens": "./patches/react-native-screens@4.28.0.patch"
+  }
 }
