@@ -7,6 +7,7 @@ const extraThemes = require("./generated-uniwind-theme-names.json");
 
 /** @type {import("expo/metro-config").MetroConfig} */
 const config = getDefaultConfig(__dirname);
+
 const workspaceRoot = path.resolve(__dirname, "../..");
 const generatedLicenseModuleRoot = path.join(__dirname, ".generated", "third-party-licenses");
 const licenseGeneratorSource = path.join(
@@ -120,10 +121,29 @@ async function prepareDeviceStream() {
   }
 }
 
-module.exports = Promise.all([generateMobileThirdPartyLicenses(), prepareDeviceStream()]).then(() =>
-  withUniwindConfig(config, {
-    cssEntryFile: "./global.css",
-    extraThemes,
-    polyfills: { rem: 14 },
-  }),
+module.exports = Promise.all([generateMobileThirdPartyLicenses(), prepareDeviceStream()]).then(
+  () => {
+    const finalConfig = withUniwindConfig(config, {
+      cssEntryFile: "./global.css",
+      extraThemes,
+      polyfills: { rem: 14 },
+    });
+
+    // Windows + Bun: metro-file-map's native watcher crashes ("Failed to start watch mode").
+    // Use polling fallback so Metro stays alive and serves bundles.
+    // Also disable persistent cache: Bun's v8 deserialize differs from Node's,
+    // causing "Unable to deserialize cloned data" and an hour-long full crawl.
+    // `cacheStores` not supported in metro@0.87; use no-op store + resetCache.
+    finalConfig.watcher = {
+      ...finalConfig.watcher,
+      healthCheck: { enabled: false },
+      polling: 1000,
+    };
+    finalConfig.cacheStores = [
+      { get: async () => null, set: async () => {}, has: async () => false },
+    ];
+    finalConfig.resetCache = true;
+
+    return finalConfig;
+  },
 );
